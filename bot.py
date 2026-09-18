@@ -18,7 +18,7 @@ from PIL import Image
 
 # ================= KREDENTIALS =================
 TOKEN = '8800996502:AAG3jcKM94hCPC1iwY3o5pV2puS5-Wm8VyI'
-ADMIN_ID = "8691419913"
+ADMIN_ID = "8270019686"
 IMGBB_API_KEY = "YOUR_IMGBB_API_KEY_HERE"
 
 # ================= MONGODB =================
