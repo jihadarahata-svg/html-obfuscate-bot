@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from PIL import Image
 
 TOKEN='8800996502:AAG3jcKM94hCPC1iwY3o5pV2puS5-Wm8VyI'
-ADMIN_ID="8691419913"
+ADMIN_ID="8270019686"
 IMGBB_API_KEY="YOUR_IMGBB_API_KEY_HERE"
 MONGO_URI="mongodb+srv://jihadarahata_db_user:jihadarahata_db_user@cluster0.yqzqslh.mongodb.net/?appName=Cluster0"
 MONGO_DB_NAME="telegram_bot"
@@ -368,6 +368,71 @@ def shorten_url(lu):
 def generate_password(l=16):
     c=string.ascii_letters+string.digits+"!@#$%^&*"
     return ''.join(random.choices(c,k=l))
+
+# ============ IMAGE UPLOAD MULTIPLE API ============
+def upload_image_multiple(image_bytes, filename="image.jpg"):
+    """Multiple API try করে image upload করে"""
+    # Try 1: ImgBB
+    try:
+        if IMGBB_API_KEY and IMGBB_API_KEY not in ["YOUR_IMGBB_API_KEY_HERE","00000000ccb4820794308292188c90c1"]:
+            image_bytes.seek(0)
+            r=requests.post(f"https://api.imgbb.com/1/upload?key={IMGBB_API_KEY}",files={"image":image_bytes},timeout=30)
+            if r.status_code==200:
+                rd=r.json()
+                if rd.get("success"):
+                    print("[ImgBB] Success")
+                    return rd["data"]["url"]
+    except Exception as e:
+        print(f"[ImgBB Failed] {e}")
+    
+    # Try 2: Catbox
+    try:
+        image_bytes.seek(0)
+        r=requests.post("https://catbox.moe/user/api.php",data={"reqtype":"fileupload"},files={"fileToUpload":(filename,image_bytes,"image/jpeg")},timeout=60)
+        if r.status_code==200 and r.text.strip().startswith("http"):
+            print("[Catbox] Success")
+            return r.text.strip()
+    except Exception as e:
+        print(f"[Catbox Failed] {e}")
+    
+    # Try 3: 0x0.st
+    try:
+        image_bytes.seek(0)
+        r=requests.post("https://0x0.st",files={"file":(filename,image_bytes,"image/jpeg")},timeout=60,headers={"User-Agent":"Mozilla/5.0"})
+        if r.status_code==200 and r.text.strip().startswith("http"):
+            print("[0x0.st] Success")
+            return r.text.strip()
+    except Exception as e:
+        print(f"[0x0.st Failed] {e}")
+    
+    # Try 4: tmpfiles.org
+    try:
+        image_bytes.seek(0)
+        r=requests.post("https://tmpfiles.org/api/v1/upload",files={"file":(filename,image_bytes,"image/jpeg")},timeout=60)
+        if r.status_code==200:
+            rd=r.json()
+            if rd.get("status")=="success":
+                url=rd["data"]["url"]
+                url=url.replace("tmpfiles.org/","tmpfiles.org/dl/")
+                print("[tmpfiles] Success")
+                return url
+    except Exception as e:
+        print(f"[tmpfiles Failed] {e}")
+    
+    # Try 5: uguu.se
+    try:
+        image_bytes.seek(0)
+        r=requests.post("https://uguu.se/upload.php",files={"files[]":(filename,image_bytes,"image/jpeg")},timeout=60)
+        if r.status_code==200:
+            rd=r.json()
+            if rd.get("success") and rd.get("files"):
+                print("[uguu] Success")
+                return rd["files"][0]["url"]
+    except Exception as e:
+        print(f"[uguu Failed] {e}")
+    
+    print("[ALL APIS FAILED]")
+    return None
 
 def get_personal_stats(uid):
     u=str(uid)
@@ -795,23 +860,9 @@ def cb(call):
 
     if call.data=="admin_help_main":
         if str(cid)!=ADMIN_ID: return
-        hk=[("👥 Users","admin_view_users"),("📝 Logs","admin_view_logs"),("🌐 URLs","admin_view_urls"),("📁 Files","admin_view_files"),("📣 Broadcast","admin_broadcast"),("✏️ Texts","admin_edit_texts"),("💰 Settings","admin_coin_settings"),("💰 Coins","admin_coins"),("🚫 Ban","admin_ban"),("👥 All Coins","admin_all_coins"),("🎁 Give All","admin_giveall_info"),("💳 Orders","admin_orders"),("📦 Prices","admin_edit_prices"),("🎟️ Vouchers","admin_vouchers"),("🆘 Tickets","admin_tickets"),("💬 Chats","admin_chats"),("⏱️ Chat CD","admin_cooldown_settings"),("⏱️ Pur CD","admin_purchase_cooldown"),("📖 Link","admin_how_to_use_settings"),("💳 bKash","admin_bkash_settings"),("👑 Sub-Admins","admin_sub_admins"),("📢 Promo","admin_send_promo")]
-        mk=InlineKeyboardMarkup(row_width=2)
-        for l,k in hk: mk.add(InlineKeyboardButton(l,callback_data=f"help_show_{k}"))
-        mk.add(InlineKeyboardButton("🔙 Back",callback_data="admin_back_to_panel"))
-        bot.send_message(cid,"📖 <b>ADMIN HELP</b>\n\nবাটন ক্লিক করুন:",reply_markup=mk,parse_mode="HTML")
-        return
-
-    if call.data.startswith("help_show_"):
-        if str(cid)!=ADMIN_ID: return
-        k=call.data.replace("help_show_","")
-        ht={"admin_view_users":("👥 Users","ইউজার সংখ্যা।","ক্লিক করুন।","👥 1250 | 🚫 12"),"admin_coin_settings":("💰 Settings","Coin reward/cost।","ক্লিক করে value দিন।","Welcome: 5 → 10"),"admin_coins":("💰 Manage Coins","ইউজার coin।","user_id amount","123 50"),"admin_bkash_settings":("💳 bKash","bKash নাম্বার।","/setbkash 016...","01631628306"),"admin_sub_admins":("👑 Sub-Admins","Staff।","/addsub /removesub","/addsub 123")}
-        d=ht.get(k,("ℹ️","এই বাটনের কাজ জানতে Admin এর সাথে যোগাযোগ করুন।","—","—"))
-        t=f"<b>{d[0]}</b>\n━━━━━━━━━━━━━━━━━━━━\n\n📌 <b>কী করে:</b>\n{d[1]}\n\n📝 <b>ব্যবহার:</b>\n{d[2]}\n\n💡 <b>উদাহরণ:</b>\n<code>{d[3]}</code>"
         mk=InlineKeyboardMarkup()
-        mk.add(InlineKeyboardButton("🔙 Help",callback_data="admin_help_main"))
-        mk.add(InlineKeyboardButton("🏠 Admin",callback_data="admin_back_to_panel"))
-        bot.send_message(cid,t,reply_markup=mk,parse_mode="HTML")
+        mk.add(InlineKeyboardButton("🔙 Back to Admin",callback_data="admin_back_to_panel"))
+        bot.send_message(cid,"📖 <b>ADMIN HELP</b>\n\nসব বাটন Admin Panel এ আছে।",reply_markup=mk,parse_mode="HTML")
         return
 
     if call.data=="admin_back_to_panel":
@@ -1041,7 +1092,7 @@ def cb(call):
         if not can:
             bot.send_message(cid,f"⏰ Cooldown! পরের <b>{fmt_time(rem)}</b> পর।",parse_mode="HTML"); return
         user_states[cid]="WAIT_CHAT_MSG"
-        bot.send_message(cid,f"💬 Live Chat\n\nMessage লিখুন।\n⚠️ প্রতি {get_live_chat_cooldown_seconds()//60} মিনিটে ১টি।",parse_mode="HTML"); return
+        bot.send_message(cid,f"💬 Live Chat\n\nMessage লিখুন।",parse_mode="HTML"); return
     if call.data=="claim_daily_now":
         r=claim_daily_bonus_streak(cid)
         if r is None: bot.answer_callback_query(call.id,"আজ নেওয়া!",show_alert=True); return
@@ -1097,7 +1148,7 @@ def hdoc(message):
             save_db()
             user_states[cid]="WAIT_RENAME_NAME"
             ext=on.split('.')[-1] if '.' in on else 'file'
-            bot.reply_to(message,f"✅ <b>File!</b>\n\n📁 <code>{on}</code>\n📊 {format_file_size(fs)}\n\n✏️ নতুন নাম:\n💡 <code>my.pdf</code> বা <code>Raju</code> (auto .{ext})",parse_mode="HTML")
+            bot.reply_to(message,f"✅ <b>File!</b>\n\n📁 <code>{on}</code>\n📊 {format_file_size(fs)}\n\n✏️ নতুন নাম:\n💡 <code>my.pdf</code> বা <code>Raju</code>",parse_mode="HTML")
         except Exception as e:
             bot.reply_to(message,f"❌ {e}"); user_states[cid]=""
         return
@@ -1155,7 +1206,7 @@ def hphoto(message):
             nsz=len(comp.getvalue())
             rat=(1-nsz/osz)*100 if osz>0 else 0
             comp.name="compressed.jpg"
-            bot.send_document(cid,comp,caption=f"✅ Compressed!\n📊 Original: {format_file_size(osz)}\n📊 New: {format_file_size(nsz)}\n📉 Saved: {rat:.1f}%",parse_mode="HTML",timeout=120)
+            bot.send_document(cid,comp,caption=f"✅ Compressed!\n📊 {format_file_size(osz)} → {format_file_size(nsz)}\n📉 Saved: {rat:.1f}%",parse_mode="HTML",timeout=120)
             db['stats']['imgcomp']=db['stats'].get('imgcomp',0)+1; save_db()
             log_activity(cid,"Image compressed")
             user_states[cid]=""
@@ -1188,13 +1239,13 @@ def hphoto(message):
             send_temp_reply(message,"⏳ Uploading...",parse_mode="HTML")
             fi=bot.get_file(message.photo[-1].file_id)
             dd=bot.download_file(fi.file_path)
-            if IMGBB_API_KEY and IMGBB_API_KEY not in ["YOUR_IMGBB_API_KEY_HERE","00000000ccb4820794308292188c90c1"]:
-                r=requests.post(f"https://api.imgbb.com/1/upload?key={IMGBB_API_KEY}",files={"image":dd})
-                rd=r.json(); url=rd["data"]["url"] if rd.get("success") else None
-            else:
-                r=requests.post("https://catbox.moe/user/api.php",data={"reqtype":"fileupload"},files={"fileToUpload":("image.jpg",dd,"image/jpeg")})
-                url=r.text if r.status_code==200 else None
-            if not url: clear_temp(cid); bot.reply_to(message,"❌ Failed."); return
+            img_buffer = io.BytesIO(dd)
+            url = upload_image_multiple(img_buffer, "image.jpg")
+            if not url:
+                clear_temp(cid)
+                bot.reply_to(message,"❌ সব API fail করেছে! আবার চেষ্টা করুন।")
+                user_states[cid]=""
+                return
             db['stats']['img']+=1
             if str(cid)!=ADMIN_ID:
                 deduct_coins(cid,COIN_COST_IMAGE,"Image to URL")
@@ -1210,7 +1261,10 @@ def hphoto(message):
             except: pass
             user_states[cid]=""
         except Exception as e:
-            clear_temp(cid); bot.reply_to(message,f"❌ {e}")
+            clear_temp(cid)
+            bot.reply_to(message,f"❌ {e}")
+            user_states[cid]=""
+        return
     else:
         bot.reply_to(message,"⚠️ মেনু থেকে 📸 Image to URL চাপুন।")
 
@@ -1403,7 +1457,7 @@ def htext(message):
     if st=="WAIT_CHAT_MSG":
         add_chat_message(cid,"user",text)
         set_live_chat_cooldown(cid)
-        bot.reply_to(message,f"✅ Admin কে পাঠানো হয়েছে।\n⏱️ পরের <b>{get_live_chat_cooldown_seconds()//60} মিনিট</b> পর।",parse_mode="HTML")
+        bot.reply_to(message,f"✅ Admin কে পাঠানো হয়েছে।",parse_mode="HTML")
         try: bot.send_message(int(ADMIN_ID),f"💬 <b>Live Chat</b>\n👤 <code>{cid}</code>\n💬 {text}",parse_mode="HTML")
         except: pass
         user_states[cid]=""; return
