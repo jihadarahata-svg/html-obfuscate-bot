@@ -5,7 +5,7 @@ from http.server import HTTPServer,BaseHTTPRequestHandler
 from pymongo import MongoClient
 from PIL import Image
 
-TOKEN='8800996502:AAG3jcKM94hCPC1iwY3o5pV2puS5-Wm8VyI'
+TOKEN='8800996502:AAEPefUUgGUkIbdD7Ribyzb4LOWh4aec7Ko'
 ADMIN_ID="8270019686"
 IMGBB_API_KEY="YOUR_IMGBB_API_KEY_HERE"
 MONGO_URI="mongodb+srv://jihadarahata_db_user:jihadarahata_db_user@cluster0.yqzqslh.mongodb.net/?appName=Cluster0"
