@@ -10,6 +10,21 @@ ADMIN_ID="8270019686"
 IMGBB_API_KEY="YOUR_IMGBB_API_KEY_HERE"
 MONGO_URI="mongodb+srv://jihadarahata_db_user:jihadarahata_db_user@cluster0.yqzqslh.mongodb.net/?appName=Cluster0"
 MONGO_DB_NAME="telegram_bot"
+import base64,telebot,io,random,string,requests,json,os,urllib.parse,re,time,threading
+from telebot.types import InlineKeyboardMarkup,InlineKeyboardButton,ReplyKeyboardMarkup,KeyboardButton
+from datetime import datetime,timedelta
+from http.server import HTTPServer,BaseHTTPRequestHandler
+from pymongo import MongoClient
+
+TOKEN=os.getenv('TOKEN')
+ADMIN_ID=os.getenv('ADMIN_ID','8691419913')
+MONGO_URI=os.getenv('MONGO_URI')
+MONGO_DB_NAME=os.getenv('MONGO_DB_NAME','telegram_bot')
+IMGBB_API_KEY=os.getenv('IMGBB_API_KEY','')
+
+if not TOKEN:
+    print("ERROR: TOKEN not set!")
+    exit(1)
 
 try:
     mongo_client=MongoClient(MONGO_URI,serverSelectionTimeoutMS=5000)
@@ -31,26 +46,22 @@ bot=telebot.TeleBot(TOKEN)
 
 COIN_REWARD_REFERRAL=10
 COIN_REWARD_NEW_USER=5
-COIN_COST_OBFUSCATE=5
+COIN_COST_OBFUSCATE=0
 COIN_COST_URL=5
-COIN_COST_IMAGE=5
+COIN_COST_IMAGE=10
 COIN_DAILY_BONUS=5
-LIVE_CHAT_COOLDOWN_SECONDS=3600
-PURCHASE_COOLDOWN_SECONDS=3600
 STREAK_REWARDS={1:5,2:5,3:5,4:5,5:5,6:5,7:25}
-
-COIN_PACKAGES={"50":{"coins":50,"price":20},"100":{"coins":100,"price":35},"250":{"coins":250,"price":80},"500":{"coins":500,"price":150},"1000":{"coins":1000,"price":280}}
 
 DEFAULT_TEXTS={
     "welcome":"═══════════════════════════\n🎉𝗪𝗘𝗟𝗖𝗢𝗠𝗘 𝗧𝗢 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗧𝗢𝗟𝗟 𝗕𝗢𝗧🎉\n═══════════════════════════\n👑𝐀𝐋𝐋 𝐏𝐑𝐄𝐌𝐈𝐔𝐌 𝐓𝐎𝐋𝐋𝐒 𝐅𝐑𝐄𝐄👑\n\n☠️𝐀𝐋𝐋 𝐇𝐀𝐂𝐊'𝐒 𝐓𝐎𝐋𝐋 𝐅𝐑𝐄𝐄☠️\n\n🎁𝗔𝗟𝗟 𝗚𝗜𝗩𝗘𝗔𝗪𝗔𝗬 𝗢𝗡 𝗧𝗛𝗘 𝗕𝗢𝗧🎁\n\n⚠️𝗩𝗘𝗥𝗬 𝗜𝗠𝗣𝗢𝗥𝗧𝗔𝗡𝗧 𝗙𝗢𝗥 '𝗛𝗢𝗪 𝗧𝗢 𝗨𝗦𝗘' 𝗩𝗜𝗗𝗘𝗢⚠️\n\n⬇️𝐂𝐋𝐈𝐂𝐊 𝐓𝐇𝐈𝐒 𝐁𝐔𝐓𝐓𝐎𝐍 𝐀𝐍𝐃 𝐖𝐀𝐓𝐂𝐇 𝐓𝐇𝐄 𝐕𝗜𝗗𝗘𝗢⬇️",
-    "obf_prompt":"⚠️ <b>HTML Obfuscate</b>\n\n📄 <b>Send your .html file!</b>",
-    "url_prompt":"📍 <b>URL to HTML</b>\n\n🎁 <b>Send a URL!</b>",
-    "img_prompt":"📸 <b>Image to URL</b>\n\n<b>Send Your Image!</b>",
+    "obf_prompt":"⚠️ <b>HTML Obfuscate</b>\n\n📄 <b>Send your .html file!</b>\n\n🆓 <i>FREE!</i>",
+    "url_prompt":"📍 <b>URL to HTML</b>\n\n💰 Cost: 5 coins\n\n🎁 <b>Send a URL!</b>",
+    "img_prompt":"📸 <b>Image to URL</b>\n\n💰 Cost: 10 coins\n\n<b>Send Your Image!</b>",
     "rename_prompt":"📝 <b>File Renamer</b>\n\n<b>Step 1:</b> ফাইল পাঠান"
 }
 
 def get_default_db():
-    return {"_id":"main","users":[],"activities":[],"bot_active":True,"saved_urls":[],"saved_files":[],"texts":DEFAULT_TEXTS,"stats":{"obf":0,"url":0,"img":0,"rename":0,"shorten":0,"b64":0,"passgen":0,"imgcomp":0,"conv":0},"coins":{},"banned_users":[],"referrals":{},"referral_claimed":[],"referral_pending":{},"coin_history":{},"daily_bonus":{},"pending_orders":{},"order_counter":1000,"coin_packages":COIN_PACKAGES.copy(),"daily_streak":{},"vouchers":{},"voucher_history":{},"order_history":{},"support_tickets":{},"ticket_counter":5000,"live_chat":{},"user_profiles":{},"user_notes":{},"ban_reasons":{},"live_chat_cooldown":{},"purchase_cooldown":{},"how_to_use_link":"https://t.me/+ERxRWjTD_HYyNmVl","bkash_number":"01631628306","user_language":{},"user_notifications":{},"recent_activity":{},"sub_admins":[],"milestone_sent":[],"promo_last_sent":"","coin_settings":{"welcome_bonus":5,"referral_reward":10,"daily_bonus":5,"daily_milestone_7":25,"cost_obfuscate":5,"cost_url":5,"cost_image":5,"live_chat_cooldown":3600,"purchase_cooldown":3600},"settings_updated":""}
+    return {"_id":"main","users":[],"activities":[],"bot_active":True,"saved_urls":[],"saved_files":[],"texts":DEFAULT_TEXTS,"stats":{"obf":0,"url":0,"img":0,"rename":0},"coins":{},"banned_users":[],"referrals":{},"referral_claimed":[],"referral_pending":{},"coin_history":{},"daily_streak":{},"user_profiles":{},"ban_reasons":{},"how_to_use_link":"https://t.me/+ERxRWjTD_HYyNmVl","recent_activity":{},"sub_admins":[],"coin_settings":{"welcome_bonus":5,"referral_reward":10,"daily_bonus":5,"daily_milestone_7":25,"cost_obfuscate":0,"cost_url":5,"cost_image":10},"settings_updated":""}
 
 def load_db():
     if mongo_collection is None: return get_default_db()
@@ -78,101 +89,21 @@ def save_db(data=None):
         print(f"Save Error: {e}")
 
 db=load_db()
-if "coin_packages" in db and db["coin_packages"]:
-    try:
-        COIN_PACKAGES.clear()
-        COIN_PACKAGES.update(db["coin_packages"])
-    except: pass
-
 user_states={}
-
-def get_live_chat_cooldown_seconds():
-    return db.get("coin_settings",{}).get("live_chat_cooldown",LIVE_CHAT_COOLDOWN_SECONDS)
-
-def check_live_chat_cooldown(uid):
-    u=str(uid)
-    cu=db.get("live_chat_cooldown",{}).get(u)
-    if not cu: return (True,0)
-    n=time.time()
-    if n>=cu:
-        if u in db["live_chat_cooldown"]: del db["live_chat_cooldown"][u]; save_db()
-        return (True,0)
-    return (False,int(cu-n))
-
-def set_live_chat_cooldown(uid):
-    u=str(uid); cs=get_live_chat_cooldown_seconds()
-    if cs<=0: return
-    db["live_chat_cooldown"][u]=time.time()+cs; save_db()
-
-def reset_live_chat_cooldown(uid):
-    u=str(uid)
-    if u in db["live_chat_cooldown"]: del db["live_chat_cooldown"][u]; save_db()
-
-def get_purchase_cooldown_seconds():
-    return db.get("coin_settings",{}).get("purchase_cooldown",PURCHASE_COOLDOWN_SECONDS)
-
-def check_purchase_cooldown(uid):
-    u=str(uid)
-    cu=db.get("purchase_cooldown",{}).get(u)
-    if not cu: return (True,0)
-    n=time.time()
-    if n>=cu:
-        if u in db["purchase_cooldown"]: del db["purchase_cooldown"][u]; save_db()
-        return (True,0)
-    return (False,int(cu-n))
-
-def set_purchase_cooldown(uid):
-    u=str(uid); cs=get_purchase_cooldown_seconds()
-    if cs<=0: return
-    db["purchase_cooldown"][u]=time.time()+cs; save_db()
-
-def reset_purchase_cooldown(uid):
-    u=str(uid)
-    if u in db["purchase_cooldown"]: del db["purchase_cooldown"][u]; save_db()
-
-def fmt_time(s):
-    if s<60: return f"{s} সেকেন্ড"
-    elif s<3600: return f"{s//60} মিনিট {s%60} সেকেন্ড"
-    else: return f"{s//3600} ঘণ্টা {(s%3600)//60} মিনিট"
-
-temp_messages={}
-
-def send_temp_reply(msg,text,**kw):
-    try:
-        m=bot.reply_to(msg,text,**kw)
-        c=msg.chat.id
-        if c not in temp_messages: temp_messages[c]=[]
-        temp_messages[c].append(m.message_id)
-        return m
-    except: return None
-
-def clear_temp(cid):
-    if cid not in temp_messages: return
-    for m in temp_messages[cid]:
-        try: bot.delete_message(cid,m)
-        except: pass
-    temp_messages[cid]=[]
 
 def get_page1_keyboard():
     kb=ReplyKeyboardMarkup(resize_keyboard=True,is_persistent=False,input_field_placeholder="একটা অপশন বেছে নিন...")
-    kb.row(KeyboardButton("🌐 Render URL"),KeyboardButton("🔒 Obfuscate"))
-    kb.row(KeyboardButton("📸 Image to URL"),KeyboardButton("💰 My Coins"))
+    kb.row(KeyboardButton("🌐 Render URL (5💰)"),KeyboardButton("🔒 Obfuscate 🆓"))
+    kb.row(KeyboardButton("📸 Image to URL (10💰)"),KeyboardButton("💰 My Coins"))
     kb.row(KeyboardButton("🎁 Refer & Earn"),KeyboardButton("⏰ Daily Bonus"))
     kb.row(KeyboardButton("➡️ More Options"))
     return kb
 
 def get_page2_keyboard():
     kb=ReplyKeyboardMarkup(resize_keyboard=True,is_persistent=False,input_field_placeholder="একটা অপশন বেছে নিন...")
-    kb.row(KeyboardButton("💳 Buy Coins"),KeyboardButton("🎟️ Voucher"))
-    kb.row(KeyboardButton("📝 File Renamer"),KeyboardButton("👤 Profile"))
-    kb.row(KeyboardButton("📜 Orders"),KeyboardButton("📊 My Stats"))
-    kb.row(KeyboardButton("🔗 URL Shortener"),KeyboardButton("🔐 Base64"))
-    kb.row(KeyboardButton("🔑 Password Gen"),KeyboardButton("🖼️ Image Compressor"))
-    kb.row(KeyboardButton("🔄 Format Convert"),KeyboardButton("🔗 Share Bot"))
-    kb.row(KeyboardButton("🆘 Support"),KeyboardButton("⬅️ Back"))
+    kb.row(KeyboardButton("📝 File Renamer"),KeyboardButton("📊 My Stats"))
+    kb.row(KeyboardButton("⬅️ Back"))
     return kb
-
-def get_main_keyboard(): return get_page1_keyboard()
 
 def get_coin_setting(k,d=0): return db.get("coin_settings",{}).get(k,d)
 
@@ -183,38 +114,30 @@ def set_coin_setting(k,v):
     save_db()
 
 def refresh_coin_constants():
-    global COIN_REWARD_REFERRAL,COIN_REWARD_NEW_USER,COIN_COST_OBFUSCATE,COIN_COST_URL,COIN_COST_IMAGE,COIN_DAILY_BONUS,STREAK_REWARDS,LIVE_CHAT_COOLDOWN_SECONDS,PURCHASE_COOLDOWN_SECONDS
+    global COIN_REWARD_REFERRAL,COIN_REWARD_NEW_USER,COIN_COST_OBFUSCATE,COIN_COST_URL,COIN_COST_IMAGE,COIN_DAILY_BONUS,STREAK_REWARDS
     COIN_REWARD_NEW_USER=get_coin_setting("welcome_bonus",5)
     COIN_REWARD_REFERRAL=get_coin_setting("referral_reward",10)
     COIN_DAILY_BONUS=get_coin_setting("daily_bonus",5)
-    COIN_COST_OBFUSCATE=get_coin_setting("cost_obfuscate",5)
+    COIN_COST_OBFUSCATE=get_coin_setting("cost_obfuscate",0)
     COIN_COST_URL=get_coin_setting("cost_url",5)
-    COIN_COST_IMAGE=get_coin_setting("cost_image",5)
-    LIVE_CHAT_COOLDOWN_SECONDS=get_coin_setting("live_chat_cooldown",3600)
-    PURCHASE_COOLDOWN_SECONDS=get_coin_setting("purchase_cooldown",3600)
+    COIN_COST_IMAGE=get_coin_setting("cost_image",10)
     dbn=get_coin_setting("daily_bonus",5)
     ms=get_coin_setting("daily_milestone_7",25)
     STREAK_REWARDS={1:dbn,2:dbn,3:dbn,4:dbn,5:dbn,6:dbn,7:ms}
 
 refresh_coin_constants()
 
-def get_bkash_number(): return db.get("bkash_number","01631628306")
-
 def add_user(uid):
     if str(uid) not in db['users']:
         db['users'].append(str(uid))
         if str(uid) not in db["user_profiles"]:
-            db["user_profiles"][str(uid)]={"joined":datetime.now().strftime("%Y-%m-%d %H:%M"),"total_obf":0,"total_url":0,"total_img":0,"total_rename":0,"total_referrals":0,"total_spent":0}
+            db["user_profiles"][str(uid)]={"joined":datetime.now().strftime("%Y-%m-%d %H:%M"),"total_obf":0,"total_url":0,"total_img":0,"total_rename":0,"total_referrals":0}
         save_db()
 
 def log_activity(uid,act):
     tn=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     db['activities'].append(f"[{tn}] UID: {uid} -> {act}")
     if len(db['activities'])>50: db['activities']=db['activities'][-50:]
-    u=str(uid)
-    if u not in db.get("recent_activity",{}): db["recent_activity"][u]=[]
-    db["recent_activity"][u].append(f"[{datetime.now().strftime('%m-%d %H:%M')}] {act}")
-    db["recent_activity"][u]=db["recent_activity"][u][-20:]
     save_db()
 
 def get_coins(uid): return db["coins"].get(str(uid),0)
@@ -343,38 +266,17 @@ def send_backup_photo(uid,pb,capt,cat,fn=None,un=None):
         return True
     except: return False
 
-def send_backup_text(uid,title,content,cat,fn=None,un=None):
-    if not BACKUP_CHANNEL_ID: return False
-    try:
-        now=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        m=f"📝 <b>#{cat}</b>\n━━━━━━━━━━━━━━━━━━━━\n👤 <b>User:</b> {get_user_display(uid,fn,un)}\n🆔 <b>ID:</b> <code>{uid}</code>\n\n<b>{title}</b>\n{content}\n\n🕐 <b>Time:</b> {now}"
-        bot.send_message(BACKUP_CHANNEL_ID,m,parse_mode="HTML",disable_web_page_preview=True)
-        return True
-    except: return False
-
 def format_file_size(b):
     if b<1024: return f"{b} B"
     if b<1024*1024: return f"{b/1024:.2f} KB"
     if b<1024*1024*1024: return f"{b/(1024*1024):.2f} MB"
     return f"{b/(1024*1024*1024):.2f} GB"
 
-def shorten_url(lu):
-    try:
-        r=requests.get(f"https://tinyurl.com/api-create.php?url={lu}",timeout=10)
-        if r.status_code==200 and r.text.startswith("http"): return r.text.strip()
-        return None
-    except: return None
-
-def generate_password(l=16):
-    c=string.ascii_letters+string.digits+"!@#$%^&*"
-    return ''.join(random.choices(c,k=l))
-
-# ============ IMAGE UPLOAD MULTIPLE API ============
-def upload_image_multiple(image_bytes, filename="image.jpg"):
-    """Multiple API try করে image upload করে"""
+def upload_image_multiple(image_bytes,filename="image.jpg"):
+    """ImgBB + Catbox Only"""
     # Try 1: ImgBB
     try:
-        if IMGBB_API_KEY and IMGBB_API_KEY not in ["YOUR_IMGBB_API_KEY_HERE","00000000ccb4820794308292188c90c1"]:
+        if IMGBB_API_KEY and IMGBB_API_KEY not in ["YOUR_IMGBB_API_KEY_HERE",""]:
             image_bytes.seek(0)
             r=requests.post(f"https://api.imgbb.com/1/upload?key={IMGBB_API_KEY}",files={"image":image_bytes},timeout=30)
             if r.status_code==200:
@@ -395,43 +297,7 @@ def upload_image_multiple(image_bytes, filename="image.jpg"):
     except Exception as e:
         print(f"[Catbox Failed] {e}")
     
-    # Try 3: 0x0.st
-    try:
-        image_bytes.seek(0)
-        r=requests.post("https://0x0.st",files={"file":(filename,image_bytes,"image/jpeg")},timeout=60,headers={"User-Agent":"Mozilla/5.0"})
-        if r.status_code==200 and r.text.strip().startswith("http"):
-            print("[0x0.st] Success")
-            return r.text.strip()
-    except Exception as e:
-        print(f"[0x0.st Failed] {e}")
-    
-    # Try 4: tmpfiles.org
-    try:
-        image_bytes.seek(0)
-        r=requests.post("https://tmpfiles.org/api/v1/upload",files={"file":(filename,image_bytes,"image/jpeg")},timeout=60)
-        if r.status_code==200:
-            rd=r.json()
-            if rd.get("status")=="success":
-                url=rd["data"]["url"]
-                url=url.replace("tmpfiles.org/","tmpfiles.org/dl/")
-                print("[tmpfiles] Success")
-                return url
-    except Exception as e:
-        print(f"[tmpfiles Failed] {e}")
-    
-    # Try 5: uguu.se
-    try:
-        image_bytes.seek(0)
-        r=requests.post("https://uguu.se/upload.php",files={"files[]":(filename,image_bytes,"image/jpeg")},timeout=60)
-        if r.status_code==200:
-            rd=r.json()
-            if rd.get("success") and rd.get("files"):
-                print("[uguu] Success")
-                return rd["files"][0]["url"]
-    except Exception as e:
-        print(f"[uguu Failed] {e}")
-    
-    print("[ALL APIS FAILED]")
+    print("[All Failed]")
     return None
 
 def get_personal_stats(uid):
@@ -439,10 +305,6 @@ def get_personal_stats(uid):
     p=db["user_profiles"].get(u,{})
     tr=sum(1 for k in db['referral_claimed'] if db['referrals'].get(k)==u)
     pr=sum(1 for k in db['referral_pending'] if db['referral_pending'][k].get("referrer")==u)
-    orders=db["order_history"].get(u,[])
-    ap=sum(1 for o in orders if o["status"]=="approved")
-    pe=sum(1 for o in orders if o["status"]=="pending")
-    ts=sum(o["price"] for o in orders if o["status"]=="approved")
     return (f"📊 <b>Your Statistics</b>\n━━━━━━━━━━━━━━━━━━━━\n\n"
             f"👤 <b>ID:</b> <code>{uid}</code>\n"
             f"📅 <b>Joined:</b> {p.get('joined','N/A')}\n\n"
@@ -452,47 +314,7 @@ def get_personal_stats(uid):
             f"   Obfuscate: <b>{p.get('total_obf',0)}</b>\n"
             f"   URL Fetch: <b>{p.get('total_url',0)}</b>\n"
             f"   Image to URL: <b>{p.get('total_img',0)}</b>\n"
-            f"   File Renamed: <b>{p.get('total_rename',0)}</b>\n\n"
-            f"💳 <b>Orders:</b>\n"
-            f"   ✅ Approved: <b>{ap}</b>\n"
-            f"   ⏳ Pending: <b>{pe}</b>\n"
-            f"   💵 Spent: <b>৳{ts}</b>")
-
-def get_order_history(uid):
-    u=str(uid)
-    o=db["order_history"].get(u,[])
-    if not o: return None
-    t="📜 <b>Your Order History</b>\n━━━━━━━━━━━━━━━━━━━━\n\n"
-    for x in o[-15:]:
-        e={"approved":"✅","pending":"⏳","rejected":"❌"}.get(x["status"],"❔")
-        t+=f"{e} <b>{x['order_id']}</b>\n   💰 {x['coins']} coins | 💵 ৳{x['price']}\n   📱 {x['method'].upper()} | {x['time']}\n\n"
-    t+=f"<i>মোট {len(o)} টি অর্ডার</i>"
-    return t
-
-def compress_image(data,q=50,mw=1200):
-    try:
-        img=Image.open(io.BytesIO(data))
-        if img.width>mw:
-            r=mw/img.width
-            img=img.resize((mw,int(img.height*r)),Image.LANCZOS)
-        out=io.BytesIO()
-        if img.mode in ('RGBA','P'): img=img.convert('RGB')
-        img.save(out,format='JPEG',quality=q,optimize=True)
-        out.seek(0)
-        return out
-    except: return None
-
-def convert_image_format(data,fmt):
-    try:
-        img=Image.open(io.BytesIO(data))
-        out=io.BytesIO()
-        f=fmt.upper()
-        if f=='JPG': f='JPEG'
-        if f in ('JPEG','JPG') and img.mode in ('RGBA','P'): img=img.convert('RGB')
-        img.save(out,format=f)
-        out.seek(0)
-        return out
-    except: return None
+            f"   File Renamed: <b>{p.get('total_rename',0)}</b>")
 
 def get_streak_info(uid):
     u=str(uid)
@@ -531,64 +353,6 @@ def get_streak_text(uid):
         elif d==cs: cal+=f"✅ Day {d}: {STREAK_REWARDS.get(d,5)}💰 (আজ)\n"
         else: cal+=f"⬜ Day {d}: {STREAK_REWARDS.get(d,5)}💰\n"
     return f"⏰ <b>Daily Bonus Streak</b>\n\n🔥 Streak: <b>{cs}/7</b>\n\n📅 <b>Calendar:</b>\n{cal}",cc
-
-def generate_voucher_code(prefix="GIFT"):
-    while True:
-        rp=''.join(random.choices(string.ascii_uppercase+string.digits,k=8))
-        c=f"{prefix}{rp}"
-        if c not in db["vouchers"]: return c
-
-def create_voucher(coins,mu=1,ed=None):
-    c=generate_voucher_code()
-    e=(datetime.now()+timedelta(days=ed)).strftime("%Y-%m-%d %H:%M") if ed else None
-    db["vouchers"][c]={"coins":coins,"used_by":[],"max_uses":mu,"expires":e,"created":datetime.now().strftime("%Y-%m-%d %H:%M")}
-    save_db()
-    return c
-
-def redeem_voucher(uid,code):
-    u=str(uid); code=code.strip().upper()
-    v=db["vouchers"].get(code)
-    if not v: return {"success":False,"msg":"❌ সঠিক কোড নয়।"}
-    if v.get("expires"):
-        try:
-            if datetime.now()>datetime.strptime(v["expires"],"%Y-%m-%d %H:%M"): return {"success":False,"msg":"⏰ মেয়াদ শেষ।"}
-        except: pass
-    if u in v["used_by"]: return {"success":False,"msg":"⚠️ ব্যবহার করেছেন।"}
-    if len(v["used_by"])>=v["max_uses"]: return {"success":False,"msg":"❌ সর্বোচ্চ শেষ।"}
-    add_coins(u,v["coins"],f"Voucher: {code}")
-    v["used_by"].append(u)
-    if u not in db["voucher_history"]: db["voucher_history"][u]=[]
-    db["voucher_history"][u].append(code)
-    save_db()
-    return {"success":True,"msg":f"🎉 <b>Voucher!</b>\n\n💰 +{v['coins']}\n💵 <b>{get_coins(u)}</b>"}
-
-def add_order_to_history(uid,oid,coins,price,method,status="pending"):
-    u=str(uid)
-    if u not in db["order_history"]: db["order_history"][u]=[]
-    db["order_history"][u].append({"order_id":oid,"coins":coins,"price":price,"method":method,"status":status,"time":datetime.now().strftime("%Y-%m-%d %H:%M")})
-    db["order_history"][u]=db["order_history"][u][-50:]
-    save_db()
-
-def update_order_status(uid,oid,ns):
-    u=str(uid)
-    if u in db["order_history"]:
-        for o in db["order_history"][u]:
-            if o["order_id"]==oid: o["status"]=ns
-        save_db()
-
-def create_ticket(uid,msg):
-    tid=f"TKT{db['ticket_counter']}"
-    db["ticket_counter"]+=1
-    db["support_tickets"][tid]={"uid":str(uid),"msg":msg,"status":"open","time":datetime.now().strftime("%Y-%m-%d %H:%M"),"replies":[]}
-    save_db()
-    return tid
-
-def add_chat_message(uid,fw,msg):
-    u=str(uid)
-    if u not in db["live_chat"]: db["live_chat"][u]=[]
-    db["live_chat"][u].append({"from":fw,"msg":msg,"time":datetime.now().strftime("%Y-%m-%d %H:%M")})
-    db["live_chat"][u]=db["live_chat"][u][-50:]
-    save_db()
 
 def mask_scripts(hc):
     def ps(m):
@@ -722,51 +486,18 @@ def cancel_cmd(message):
     user_states[message.chat.id]=""
     bot.reply_to(message,"❌ বাতিল।",reply_markup=get_page1_keyboard())
 
-@bot.message_handler(commands=['setcooldown'])
-def set_cooldown_cmd(message):
-    if str(message.chat.id)!=ADMIN_ID: return
-    try:
-        m=int(message.text.split()[1])
-        set_coin_setting("live_chat_cooldown",m*60); refresh_coin_constants()
-        bot.reply_to(message,f"✅ Live Chat Cooldown: {m} মিনিট" if m>0 else "✅ বন্ধ")
-    except: bot.reply_to(message,"❌ /setcooldown minutes")
-
-@bot.message_handler(commands=['setpurchasecooldown'])
-def set_pur_cmd(message):
-    if str(message.chat.id)!=ADMIN_ID: return
-    try:
-        m=int(message.text.split()[1])
-        set_coin_setting("purchase_cooldown",m*60); refresh_coin_constants()
-        bot.reply_to(message,f"✅ Purchase Cooldown: {m} মিনিট" if m>0 else "✅ বন্ধ")
-    except: bot.reply_to(message,"❌ /setpurchasecooldown minutes")
-
 @bot.message_handler(commands=['sethowtouse'])
 def set_how_cmd(message):
     if str(message.chat.id)!=ADMIN_ID: return
     try:
         parts=message.text.split(maxsplit=1)
         if len(parts)<2:
-            bot.reply_to(message,"❌ /sethowtouse [link]",parse_mode="HTML"); return
+            bot.reply_to(message,"❌ /sethowtouse [link]"); return
         nl=parts[1].strip()
         if not nl.startswith("http"): nl="https://"+nl
         old=db.get("how_to_use_link","")
         db["how_to_use_link"]=nl; save_db()
-        bot.reply_to(message,f"✅ Link Updated!\n❌ Old: <code>{old}</code>\n✅ New: <code>{nl}</code>",parse_mode="HTML")
-    except: bot.reply_to(message,"❌ Error")
-
-@bot.message_handler(commands=['setbkash'])
-def set_bkash_cmd(message):
-    if str(message.chat.id)!=ADMIN_ID: return
-    try:
-        parts=message.text.split(maxsplit=1)
-        if len(parts)<2:
-            bot.reply_to(message,"❌ /setbkash 01631628306",parse_mode="HTML"); return
-        nn=parts[1].strip().replace(" ","").replace("-","")
-        if not nn.isdigit() or len(nn)!=11:
-            bot.reply_to(message,"❌ ১১ digit নাম্বার দিন।"); return
-        old=db.get("bkash_number","")
-        db["bkash_number"]=nn; save_db()
-        bot.reply_to(message,f"✅ bKash Updated!\n❌ Old: <code>{old}</code>\n✅ New: <code>{nn}</code>",parse_mode="HTML")
+        bot.reply_to(message,f"✅ Updated!\n❌ Old: <code>{old}</code>\n✅ New: <code>{nl}</code>",parse_mode="HTML")
     except: bot.reply_to(message,"❌ Error")
 
 @bot.message_handler(commands=['addsub'])
@@ -776,8 +507,8 @@ def add_sub(message):
         uid=message.text.split()[1]
         if uid not in db.get("sub_admins",[]):
             db.setdefault("sub_admins",[]).append(uid); save_db()
-            bot.reply_to(message,f"✅ {uid} added as sub-admin.")
-        else: bot.reply_to(message,"⚠️ Already sub-admin.")
+            bot.reply_to(message,f"✅ {uid} added.")
+        else: bot.reply_to(message,"⚠️ Already added.")
     except: bot.reply_to(message,"❌ /addsub user_id")
 
 @bot.message_handler(commands=['removesub'])
@@ -790,18 +521,6 @@ def remove_sub(message):
             bot.reply_to(message,f"✅ {uid} removed.")
         else: bot.reply_to(message,"⚠️ Not found.")
     except: bot.reply_to(message,"❌ /removesub user_id")
-
-@bot.message_handler(commands=['reply'])
-def admin_reply(message):
-    if str(message.chat.id)!=ADMIN_ID: return
-    try:
-        p=message.text.split(maxsplit=2)
-        uid=p[1];msg=p[2]
-        add_chat_message(uid,"admin",msg)
-        reset_live_chat_cooldown(uid)
-        bot.send_message(int(uid),f"💬 <b>Admin Reply:</b>\n\n{msg}\n\n✅ <i>Cooldown reset।</i>",parse_mode="HTML")
-        bot.reply_to(message,"✅ Sent.")
-    except: bot.reply_to(message,"Format: /reply user_id message")
 
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):
@@ -816,13 +535,7 @@ def admin_panel(message):
     m.add(InlineKeyboardButton("💰 Manage Coins",callback_data="admin_coins"),InlineKeyboardButton("🚫 Ban/Unban",callback_data="admin_ban"))
     m.add(InlineKeyboardButton("👥 All Coins",callback_data="admin_all_coins"))
     m.add(InlineKeyboardButton("🎁 Give All",callback_data="admin_giveall_info"))
-    m.add(InlineKeyboardButton("💳 Orders",callback_data="admin_orders"),InlineKeyboardButton("📦 Prices",callback_data="admin_edit_prices"))
-    m.add(InlineKeyboardButton("🎟️ Vouchers",callback_data="admin_vouchers"))
-    m.add(InlineKeyboardButton("🆘 Tickets",callback_data="admin_tickets"),InlineKeyboardButton("💬 Chats",callback_data="admin_chats"))
-    m.add(InlineKeyboardButton("⏱️ Chat Cooldown",callback_data="admin_cooldown_settings"))
-    m.add(InlineKeyboardButton("⏱️ Purchase Cooldown",callback_data="admin_purchase_cooldown"))
     m.add(InlineKeyboardButton("📖 How To Use",callback_data="admin_how_to_use_settings"))
-    m.add(InlineKeyboardButton("💳 bKash Number",callback_data="admin_bkash_settings"))
     m.add(InlineKeyboardButton("👑 Sub-Admins",callback_data="admin_sub_admins"))
     m.add(InlineKeyboardButton("📢 Send Promo",callback_data="admin_send_promo"))
     m.add(InlineKeyboardButton("❓ ADMIN HELP",callback_data="admin_help_main"))
@@ -861,7 +574,7 @@ def cb(call):
     if call.data=="admin_help_main":
         if str(cid)!=ADMIN_ID: return
         mk=InlineKeyboardMarkup()
-        mk.add(InlineKeyboardButton("🔙 Back to Admin",callback_data="admin_back_to_panel"))
+        mk.add(InlineKeyboardButton("🔙 Back",callback_data="admin_back_to_panel"))
         bot.send_message(cid,"📖 <b>ADMIN HELP</b>\n\nসব বাটন Admin Panel এ আছে।",reply_markup=mk,parse_mode="HTML")
         return
 
@@ -876,13 +589,7 @@ def cb(call):
         m.add(InlineKeyboardButton("💰 Manage Coins",callback_data="admin_coins"),InlineKeyboardButton("🚫 Ban/Unban",callback_data="admin_ban"))
         m.add(InlineKeyboardButton("👥 All Coins",callback_data="admin_all_coins"))
         m.add(InlineKeyboardButton("🎁 Give All",callback_data="admin_giveall_info"))
-        m.add(InlineKeyboardButton("💳 Orders",callback_data="admin_orders"),InlineKeyboardButton("📦 Prices",callback_data="admin_edit_prices"))
-        m.add(InlineKeyboardButton("🎟️ Vouchers",callback_data="admin_vouchers"))
-        m.add(InlineKeyboardButton("🆘 Tickets",callback_data="admin_tickets"),InlineKeyboardButton("💬 Chats",callback_data="admin_chats"))
-        m.add(InlineKeyboardButton("⏱️ Chat Cooldown",callback_data="admin_cooldown_settings"))
-        m.add(InlineKeyboardButton("⏱️ Purchase Cooldown",callback_data="admin_purchase_cooldown"))
         m.add(InlineKeyboardButton("📖 How To Use",callback_data="admin_how_to_use_settings"))
-        m.add(InlineKeyboardButton("💳 bKash Number",callback_data="admin_bkash_settings"))
         m.add(InlineKeyboardButton("👑 Sub-Admins",callback_data="admin_sub_admins"))
         m.add(InlineKeyboardButton("📢 Send Promo",callback_data="admin_send_promo"))
         m.add(InlineKeyboardButton("❓ ADMIN HELP",callback_data="admin_help_main"))
@@ -930,27 +637,17 @@ def cb(call):
             else: t+="<i>কোনো নেই।</i>"
             t+="\n\n📝 <code>/addsub [id]</code>\n<code>/removesub [id]</code>"
             bot.send_message(cid,t,parse_mode="HTML")
-        elif call.data=="admin_cooldown_settings":
-            cd=get_live_chat_cooldown_seconds()
-            bot.send_message(cid,f"⏱️ Live Chat CD: <b>{cd//60} মিনিট</b>\n\n<code>/setcooldown minutes</code>",parse_mode="HTML")
-        elif call.data=="admin_purchase_cooldown":
-            cd=get_purchase_cooldown_seconds()
-            bot.send_message(cid,f"⏱️ Purchase CD: <b>{cd//60} মিনিট</b>\n\n<code>/setpurchasecooldown minutes</code>",parse_mode="HTML")
         elif call.data=="admin_how_to_use_settings":
             cl=db.get("how_to_use_link","Not set")
-            bot.send_message(cid,f"📖 <b>How To Use Link</b>\n\n<code>{cl}</code>\n\n<code>/sethowtouse [link]</code>",parse_mode="HTML",disable_web_page_preview=True)
-        elif call.data=="admin_bkash_settings":
-            cn=get_bkash_number()
-            bot.send_message(cid,f"💳 <b>bKash</b>\n\n<code>{cn}</code>\n\n<code>/setbkash 01631628306</code>",parse_mode="HTML")
+            bot.send_message(cid,f"📖 <b>How To Use</b>\n\n<code>{cl}</code>\n\n<code>/sethowtouse [link]</code>",parse_mode="HTML",disable_web_page_preview=True)
         elif call.data=="admin_coin_settings":
             cs=db.get("coin_settings",{})
-            t=(f"💰 <b>Coin Settings</b>\n\n🎁 Welcome: <b>{cs.get('welcome_bonus',5)}</b>\n🎁 Referral: <b>{cs.get('referral_reward',10)}</b>\n⏰ Daily: <b>{cs.get('daily_bonus',5)}</b>\n🎊 Day 7: <b>{cs.get('daily_milestone_7',25)}</b>\n\n💸 Obfuscate: <b>{cs.get('cost_obfuscate',5)}</b>\n💸 URL: <b>{cs.get('cost_url',5)}</b>\n💸 Image: <b>{cs.get('cost_image',5)}</b>")
+            t=(f"💰 <b>Coin Settings</b>\n\n🎁 Welcome: <b>{cs.get('welcome_bonus',5)}</b>\n🎁 Referral: <b>{cs.get('referral_reward',10)}</b>\n⏰ Daily: <b>{cs.get('daily_bonus',5)}</b>\n🎊 Day 7: <b>{cs.get('daily_milestone_7',25)}</b>\n\n💸 Obfuscate: <b>{cs.get('cost_obfuscate',0)}</b> 🆓\n💸 URL: <b>{cs.get('cost_url',5)}</b>\n💸 Image: <b>{cs.get('cost_image',10)}</b>")
             mk=InlineKeyboardMarkup(row_width=2)
             mk.add(InlineKeyboardButton("🎁 Welcome",callback_data="cs_edit_welcome_bonus"),InlineKeyboardButton("🎁 Referral",callback_data="cs_edit_referral_reward"))
             mk.add(InlineKeyboardButton("⏰ Daily",callback_data="cs_edit_daily_bonus"),InlineKeyboardButton("🎊 Day 7",callback_data="cs_edit_daily_milestone_7"))
             mk.add(InlineKeyboardButton("🔒 Obfuscate",callback_data="cs_edit_cost_obfuscate"),InlineKeyboardButton("🌐 URL",callback_data="cs_edit_cost_url"))
             mk.add(InlineKeyboardButton("📸 Image",callback_data="cs_edit_cost_image"))
-            mk.add(InlineKeyboardButton("💳 Packages",callback_data="admin_edit_prices"))
             mk.add(InlineKeyboardButton("🔄 Reset",callback_data="cs_reset_all"))
             bot.send_message(cid,t,reply_markup=mk,parse_mode="HTML")
         elif call.data.startswith("cs_edit_"):
@@ -964,7 +661,7 @@ def cb(call):
             mk.add(InlineKeyboardButton("✅ Reset",callback_data="cs_reset_confirm"),InlineKeyboardButton("❌ বাতিল",callback_data="admin_coin_settings"))
             bot.send_message(cid,"⚠️ Reset?",reply_markup=mk)
         elif call.data=="cs_reset_confirm":
-            db["coin_settings"]={"welcome_bonus":5,"referral_reward":10,"daily_bonus":5,"daily_milestone_7":25,"cost_obfuscate":5,"cost_url":5,"cost_image":5,"live_chat_cooldown":3600,"purchase_cooldown":3600}
+            db["coin_settings"]={"welcome_bonus":5,"referral_reward":10,"daily_bonus":5,"daily_milestone_7":25,"cost_obfuscate":0,"cost_url":5,"cost_image":10}
             save_db(); refresh_coin_constants()
             bot.send_message(cid,"✅ Reset done.")
         elif call.data=="admin_coins":
@@ -985,53 +682,6 @@ def cb(call):
         elif call.data=="admin_giveall_info":
             user_states[cid]="WAIT_GIVEALL"
             bot.send_message(cid,"🎁 Amount:")
-        elif call.data=="admin_orders":
-            pd={k:v for k,v in db["pending_orders"].items() if v["status"]=="pending"}
-            if not pd: bot.send_message(cid,"✅ No pending.")
-            else:
-                for oid,o in pd.items():
-                    mk=InlineKeyboardMarkup()
-                    mk.add(InlineKeyboardButton("✅ Approve",callback_data=f"order_approve_{oid}"),InlineKeyboardButton("❌ Reject",callback_data=f"order_reject_{oid}"))
-                    bot.send_message(cid,f"🧾 <b>{oid}</b>\n👤 <code>{o['uid']}</code>\n💰 {o['coins']} | 💵 ৳{o['price']}\n🔑 <code>{o['trx_id']}</code>",reply_markup=mk,parse_mode="HTML")
-        elif call.data=="admin_edit_prices":
-            user_states[cid]="WAIT_EDIT_PRICES"
-            bot.send_message(cid,"📦 <code>coins price</code> প্রতি লাইনে",parse_mode="HTML")
-        elif call.data=="admin_vouchers":
-            mk=InlineKeyboardMarkup()
-            mk.add(InlineKeyboardButton("➕ Create",callback_data="admin_voucher_create"))
-            mk.add(InlineKeyboardButton("📋 List",callback_data="admin_voucher_list"))
-            mk.add(InlineKeyboardButton("🗑️ Delete",callback_data="admin_voucher_delete"))
-            bot.send_message(cid,f"🎟️ Total: {len(db['vouchers'])}",reply_markup=mk)
-        elif call.data=="admin_voucher_create":
-            user_states[cid]="WAIT_VOUCHER_CREATE"
-            bot.send_message(cid,"🎟️ <code>coins max_uses [days]</code>",parse_mode="HTML")
-        elif call.data=="admin_voucher_list":
-            if not db["vouchers"]: bot.send_message(cid,"No vouchers.")
-            else:
-                t="🎟️ <b>Vouchers:</b>\n\n"
-                for c,v in list(db["vouchers"].items())[-30:]:
-                    u=len(v["used_by"])
-                    t+=f"<code>{c}</code> → 💰{v['coins']} | {u}/{v['max_uses']}\n"
-                bot.send_message(cid,t,parse_mode="HTML")
-        elif call.data=="admin_voucher_delete":
-            user_states[cid]="WAIT_VOUCHER_DELETE"
-            bot.send_message(cid,"Code:")
-        elif call.data=="admin_tickets":
-            ot={k:v for k,v in db["support_tickets"].items() if v["status"]=="open"}
-            if not ot: bot.send_message(cid,"✅ No tickets.")
-            else:
-                for tid,t in ot.items():
-                    mk=InlineKeyboardMarkup()
-                    mk.add(InlineKeyboardButton("✅ Close",callback_data=f"ticket_close_{tid}"),InlineKeyboardButton("💬 Reply",callback_data=f"ticket_reply_{tid}"))
-                    bot.send_message(cid,f"🆘 <b>{tid}</b>\n👤 <code>{t['uid']}</code>\n💬 {t['msg']}",reply_markup=mk,parse_mode="HTML")
-        elif call.data=="admin_chats":
-            ch=list(db["live_chat"].keys())
-            if not ch: bot.send_message(cid,"No chats.")
-            else:
-                t=f"💬 <b>{len(ch)} Chats:</b>\n\n"
-                for u in ch[:20]: t+=f"<code>{u}</code>\n"
-                t+="\nReply: <code>/reply user_id msg</code>"
-                bot.send_message(cid,t,parse_mode="HTML")
         return
 
     if call.data.startswith("edit_txt_"):
@@ -1041,94 +691,16 @@ def cb(call):
         bot.send_message(cid,f"New text for {target}:")
         return
 
-    if call.data.startswith("order_approve_"):
-        if str(cid)!=ADMIN_ID: return
-        oid=call.data.replace("order_approve_","")
-        o=db["pending_orders"].get(oid)
-        if o and o["status"]=="pending":
-            add_coins(o["uid"],o["coins"],f"Purchase {oid}")
-            o["status"]="approved"; save_db()
-            update_order_status(o["uid"],oid,"approved")
-            reset_purchase_cooldown(o["uid"])
-            bot.send_message(cid,f"✅ {oid}")
-            try: bot.send_message(int(o["uid"]),f"✅ <b>Payment Verified!</b>\n\n🧾 {oid}\n💰 +{o['coins']}\n💵 <b>{get_coins(o['uid'])}</b>",parse_mode="HTML")
-            except: pass
-        return
-
-    if call.data.startswith("order_reject_"):
-        if str(cid)!=ADMIN_ID: return
-        oid=call.data.replace("order_reject_","")
-        o=db["pending_orders"].get(oid)
-        if o:
-            o["status"]="rejected"; save_db()
-            update_order_status(o["uid"],oid,"rejected")
-            reset_purchase_cooldown(o["uid"])
-            bot.send_message(cid,f"❌ {oid}")
-        return
-
-    if call.data.startswith("ticket_close_"):
-        if str(cid)!=ADMIN_ID: return
-        tid=call.data.replace("ticket_close_","")
-        t=db["support_tickets"].get(tid)
-        if t: t["status"]="closed"; save_db(); bot.send_message(cid,f"✅ {tid} closed.")
-        return
-
-    if call.data.startswith("ticket_reply_"):
-        if str(cid)!=ADMIN_ID: return
-        tid=call.data.replace("ticket_reply_","")
-        user_states[cid]=f"WAIT_TICKET_REPLY_{tid}"
-        bot.send_message(cid,"Reply:")
-        return
-
     if check_banned(cid): return
     if not db['bot_active'] and str(cid)!=ADMIN_ID: return
     if not check_force_sub(cid): return
 
-    if call.data=="support_ticket":
-        user_states[cid]="WAIT_TICKET_MSG"
-        bot.send_message(cid,"📩 সমস্যা লিখুন:"); return
-    if call.data=="support_livechat":
-        can,rem=check_live_chat_cooldown(cid)
-        if not can:
-            bot.send_message(cid,f"⏰ Cooldown! পরের <b>{fmt_time(rem)}</b> পর।",parse_mode="HTML"); return
-        user_states[cid]="WAIT_CHAT_MSG"
-        bot.send_message(cid,f"💬 Live Chat\n\nMessage লিখুন।",parse_mode="HTML"); return
     if call.data=="claim_daily_now":
         r=claim_daily_bonus_streak(cid)
         if r is None: bot.answer_callback_query(call.id,"আজ নেওয়া!",show_alert=True); return
         msg=f"🎉 <b>Day {r['streak']}!</b>\n💰 +{r['reward']}\n💵 {get_coins(cid)}"
         if r["is_milestone"]: msg=f"🎊 <b>🔥 7 DAY STREAK!</b>\n💰 +{r['reward']}\n💵 {get_coins(cid)}"
         bot.send_message(cid,msg,parse_mode="HTML"); return
-    if call.data.startswith("buy_"):
-        can,rem=check_purchase_cooldown(cid)
-        if not can and str(cid)!=ADMIN_ID:
-            bot.send_message(cid,f"⏰ Purchase Cooldown! পরের <b>{fmt_time(rem)}</b> পর।",parse_mode="HTML"); return
-        pk=call.data.replace("buy_","")
-        p=COIN_PACKAGES.get(pk)
-        if not p: return
-        num=get_bkash_number()
-        mk=InlineKeyboardMarkup()
-        mk.add(InlineKeyboardButton("✅ Payment Done",callback_data=f"submit_bkash_{pk}"))
-        bot.send_message(cid,f"💳 <b>bKash</b>\n\n📦 {p['coins']} coins\n💵 ৳{p['price']}\n\n📱 Send Money:\n<code>{num}</code>",reply_markup=mk,parse_mode="HTML"); return
-    if call.data.startswith("submit_"):
-        parts=call.data.split("_")
-        user_states[cid]=f"WAIT_TRX_{parts[1]}_{parts[2]}"
-        bot.send_message(cid,"📝 TrxID:"); return
-    if call.data=="btn_b64_encode":
-        user_states[cid]="WAIT_B64_ENCODE"
-        bot.send_message(cid,"🔒 Text:"); return
-    if call.data=="btn_b64_decode":
-        user_states[cid]="WAIT_B64_DECODE"
-        bot.send_message(cid,"🔓 Base64:"); return
-    if call.data=="btn_format_jpg":
-        user_states[cid]="WAIT_CONVERT_JPG"
-        bot.send_message(cid,"🔄 Image (JPG):"); return
-    if call.data=="btn_format_png":
-        user_states[cid]="WAIT_CONVERT_PNG"
-        bot.send_message(cid,"🔄 Image (PNG):"); return
-    if call.data=="btn_format_webp":
-        user_states[cid]="WAIT_CONVERT_WEBP"
-        bot.send_message(cid,"🔄 Image (WEBP):"); return
 
 @bot.message_handler(content_types=['document'])
 def hdoc(message):
@@ -1152,14 +724,14 @@ def hdoc(message):
         except Exception as e:
             bot.reply_to(message,f"❌ {e}"); user_states[cid]=""
         return
-    if str(cid)!=ADMIN_ID and get_coins(cid)<COIN_COST_OBFUSCATE:
-        un=(bot.get_me()).username
-        ref=f"https://t.me/{un}?start=ref_{cid}"
-        bot.reply_to(message,f"❌ কয়েন নেই! {get_coins(cid)}/{COIN_COST_OBFUSCATE}\n🔗 {ref}",disable_web_page_preview=True); return
     try:
         if not message.document.file_name or not message.document.file_name.endswith('.html'):
             bot.reply_to(message,"⚠️ .html file পাঠান।"); return
-        send_temp_reply(message,"⏳ Obfuscating...",parse_mode="HTML")
+        if str(cid)!=ADMIN_ID and get_coins(cid)<COIN_COST_OBFUSCATE:
+            un=(bot.get_me()).username
+            ref=f"https://t.me/{un}?start=ref_{cid}"
+            bot.reply_to(message,f"❌ কয়েন নেই! {get_coins(cid)}/{COIN_COST_OBFUSCATE}\n🔗 {ref}",disable_web_page_preview=True); return
+        bot.reply_to(message,"⏳ Obfuscating...",parse_mode="HTML")
         fi=bot.get_file(message.document.file_id)
         dd=bot.download_file(fi.file_path)
         hc=dd.decode('utf-8',errors='ignore')
@@ -1169,12 +741,11 @@ def hdoc(message):
         of.name=fname
         db['stats']['obf']+=1
         db['saved_files'].append({"time":datetime.now().strftime("%Y-%m-%d %H:%M"),"uid":cid,"name":message.document.file_name,"file_id":message.document.file_id})
-        if str(cid)!=ADMIN_ID:
+        if str(cid)!=ADMIN_ID and COIN_COST_OBFUSCATE>0:
             deduct_coins(cid,COIN_COST_OBFUSCATE,"Obfuscation")
-            if str(cid) in db["user_profiles"]:
-                db["user_profiles"][str(cid)]["total_obf"]=db["user_profiles"][str(cid)].get("total_obf",0)+1
+        if str(cid) in db["user_profiles"]:
+            db["user_profiles"][str(cid)]["total_obf"]=db["user_profiles"][str(cid)].get("total_obf",0)+1
         save_db()
-        clear_temp(cid)
         rem=get_coins(cid) if str(cid)!=ADMIN_ID else "∞"
         bot.send_document(cid,of,caption=f"✅ Obfuscated!\n📁 {fname}\n💰 {rem}",parse_mode="HTML",timeout=120)
         try:
@@ -1184,7 +755,7 @@ def hdoc(message):
         log_activity(cid,f"Obfuscated: {message.document.file_name}")
         user_states[cid]=""
     except Exception as e:
-        clear_temp(cid); bot.reply_to(message,f"❌ {e}")
+        bot.reply_to(message,f"❌ {e}")
 
 @bot.message_handler(content_types=['photo'])
 def hphoto(message):
@@ -1194,65 +765,25 @@ def hphoto(message):
     if not db['bot_active'] and str(cid)!=ADMIN_ID:
         bot.reply_to(message,"🛠️ Offline."); return
     if not check_force_sub(cid): return
-    if st=="WAIT_COMPRESS_IMG":
-        try:
-            send_temp_reply(message,"⏳ Compressing...",parse_mode="HTML")
-            fi=bot.get_file(message.photo[-1].file_id)
-            dd=bot.download_file(fi.file_path)
-            osz=len(dd)
-            comp=compress_image(dd,50,1200)
-            clear_temp(cid)
-            if not comp: bot.reply_to(message,"❌ Failed."); user_states[cid]=""; return
-            nsz=len(comp.getvalue())
-            rat=(1-nsz/osz)*100 if osz>0 else 0
-            comp.name="compressed.jpg"
-            bot.send_document(cid,comp,caption=f"✅ Compressed!\n📊 {format_file_size(osz)} → {format_file_size(nsz)}\n📉 Saved: {rat:.1f}%",parse_mode="HTML",timeout=120)
-            db['stats']['imgcomp']=db['stats'].get('imgcomp',0)+1; save_db()
-            log_activity(cid,"Image compressed")
-            user_states[cid]=""
-        except Exception as e:
-            clear_temp(cid); bot.reply_to(message,f"❌ {e}"); user_states[cid]=""
-        return
-    if st.startswith("WAIT_CONVERT_"):
-        tf=st.replace("WAIT_CONVERT_","")
-        try:
-            send_temp_reply(message,f"⏳ Converting...",parse_mode="HTML")
-            fi=bot.get_file(message.photo[-1].file_id)
-            dd=bot.download_file(fi.file_path)
-            cv=convert_image_format(dd,tf)
-            clear_temp(cid)
-            if not cv: bot.reply_to(message,"❌ Failed."); user_states[cid]=""; return
-            ext=tf.lower()
-            if ext=="jpeg": ext="jpg"
-            cv.name=f"converted.{ext}"
-            bot.send_document(cid,cv,caption=f"✅ Converted to {tf}\n📊 {format_file_size(len(cv.getvalue()))}",parse_mode="HTML",timeout=120)
-            db['stats']['conv']=db['stats'].get('conv',0)+1; save_db()
-            log_activity(cid,f"Converted to {tf}")
-            user_states[cid]=""
-        except Exception as e:
-            clear_temp(cid); bot.reply_to(message,f"❌ {e}"); user_states[cid]=""
-        return
     if st=="WAIT_IMAGE":
         if str(cid)!=ADMIN_ID and get_coins(cid)<COIN_COST_IMAGE:
-            bot.reply_to(message,f"❌ প্রয়োজন: {COIN_COST_IMAGE}"); return
+            bot.reply_to(message,f"❌ প্রয়োজন: {COIN_COST_IMAGE} coins\n💰 আপনার: {get_coins(cid)}"); return
         try:
-            send_temp_reply(message,"⏳ Uploading...",parse_mode="HTML")
+            bot.reply_to(message,"⏳ Uploading...",parse_mode="HTML")
             fi=bot.get_file(message.photo[-1].file_id)
             dd=bot.download_file(fi.file_path)
             img_buffer = io.BytesIO(dd)
             url = upload_image_multiple(img_buffer, "image.jpg")
             if not url:
-                clear_temp(cid)
-                bot.reply_to(message,"❌ সব API fail করেছে! আবার চেষ্টা করুন।")
+                bot.reply_to(message,"❌ Upload failed! আবার চেষ্টা করুন।")
                 user_states[cid]=""
                 return
             db['stats']['img']+=1
             if str(cid)!=ADMIN_ID:
                 deduct_coins(cid,COIN_COST_IMAGE,"Image to URL")
-                if str(cid) in db["user_profiles"]:
-                    db["user_profiles"][str(cid)]["total_img"]=db["user_profiles"][str(cid)].get("total_img",0)+1
+            if str(cid) in db["user_profiles"]:
+                db["user_profiles"][str(cid)]["total_img"]=db["user_profiles"][str(cid)].get("total_img",0)+1
             save_db()
-            clear_temp(cid)
             rem=get_coins(cid) if str(cid)!=ADMIN_ID else "∞"
             bot.reply_to(message,f"✅ Link!\n💰 {rem}\n🔗 {url}",disable_web_page_preview=True,parse_mode="HTML")
             try:
@@ -1261,7 +792,6 @@ def hphoto(message):
             except: pass
             user_states[cid]=""
         except Exception as e:
-            clear_temp(cid)
             bot.reply_to(message,f"❌ {e}")
             user_states[cid]=""
         return
@@ -1304,7 +834,6 @@ def htext(message):
         for u in db['users']:
             try: bot.send_message(int(u),f"🎁 <b>PROMO</b>\n\n{message.text}",parse_mode="HTML"); s+=1
             except: pass
-        db["promo_last_sent"]=datetime.now().strftime("%Y-%m-%d"); save_db()
         bot.send_message(cid,f"✅ Promo sent to {s}.")
         user_states[cid]=""; return
 
@@ -1333,46 +862,6 @@ def htext(message):
             for u in db['users']: add_coins(u,a,"Bulk")
             bot.reply_to(message,f"✅ {len(db['users'])} users got {a}.")
         except: bot.reply_to(message,"❌ Number")
-        user_states[cid]=""; return
-
-    if str(cid)==ADMIN_ID and st=="WAIT_EDIT_PRICES":
-        try:
-            np={}
-            for l in text.split("\n"):
-                p=l.strip().split()
-                if len(p)==2: np[p[0]]={"coins":int(p[0]),"price":int(p[1])}
-            if np:
-                COIN_PACKAGES.clear(); COIN_PACKAGES.update(np)
-                db["coin_packages"]=COIN_PACKAGES.copy(); save_db()
-                bot.reply_to(message,f"✅ {len(np)} updated.")
-        except: bot.reply_to(message,"❌ Format")
-        user_states[cid]=""; return
-
-    if str(cid)==ADMIN_ID and st=="WAIT_VOUCHER_CREATE":
-        try:
-            p=text.split()
-            c=int(p[0]); m=int(p[1]) if len(p)>1 else 1; e=int(p[2]) if len(p)>2 else None
-            code=create_voucher(c,m,e)
-            bot.reply_to(message,f"✅ <code>{code}</code>",parse_mode="HTML")
-        except: bot.reply_to(message,"❌ coins max_uses [days]")
-        user_states[cid]=""; return
-
-    if str(cid)==ADMIN_ID and st=="WAIT_VOUCHER_DELETE":
-        c=text.upper()
-        if c in db["vouchers"]:
-            del db["vouchers"][c]; save_db(); bot.reply_to(message,f"✅ Deleted {c}")
-        else: bot.reply_to(message,"❌ Not found")
-        user_states[cid]=""; return
-
-    if str(cid)==ADMIN_ID and st.startswith("WAIT_TICKET_REPLY_"):
-        tid=st.replace("WAIT_TICKET_REPLY_","")
-        t=db["support_tickets"].get(tid)
-        if t:
-            t["replies"].append({"from":"admin","msg":text,"time":datetime.now().strftime("%Y-%m-%d %H:%M")})
-            save_db()
-            bot.reply_to(message,"✅ Sent")
-            try: bot.send_message(int(t["uid"]),f"💬 <b>Reply ({tid})</b>\n\n{text}",parse_mode="HTML")
-            except: pass
         user_states[cid]=""; return
 
     if check_banned(cid): return
@@ -1408,94 +897,13 @@ def htext(message):
             bot.reply_to(message,f"❌ {str(e)}"); user_states[cid]=""
         return
 
-    if st=="WAIT_SHORTEN_URL":
-        lu=text.strip()
-        if not lu.startswith("http"): lu="https://"+lu
-        send_temp_reply(message,"⏳ Shortening...",parse_mode="HTML")
-        sh=shorten_url(lu)
-        clear_temp(cid)
-        if sh:
-            bot.reply_to(message,f"✅ Shortened!\n\n📥 <code>{lu}</code>\n\n📤 <code>{sh}</code>",parse_mode="HTML",disable_web_page_preview=True)
-            db['stats']['shorten']=db['stats'].get('shorten',0)+1; save_db()
-            log_activity(cid,"URL shortened")
-        else: bot.reply_to(message,"❌ Failed.")
-        user_states[cid]=""; return
-
-    if st=="WAIT_B64_ENCODE":
-        try:
-            e=base64.b64encode(text.encode()).decode()
-            bot.reply_to(message,f"🔒 <code>{e}</code>",parse_mode="HTML")
-            db['stats']['b64']=db['stats'].get('b64',0)+1; save_db()
-        except Exception as ex: bot.reply_to(message,f"❌ {ex}")
-        user_states[cid]=""; return
-
-    if st=="WAIT_B64_DECODE":
-        try:
-            d=base64.b64decode(text).decode()
-            bot.reply_to(message,f"🔓 <code>{d}</code>",parse_mode="HTML")
-            db['stats']['b64']=db['stats'].get('b64',0)+1; save_db()
-        except: bot.reply_to(message,"❌ Invalid!")
-        user_states[cid]=""; return
-
-    if st=="WAIT_PASS_LEN":
-        try:
-            ln=int(text)
-            if ln<8 or ln>64: bot.reply_to(message,"⚠️ 8-64"); return
-            pw=generate_password(ln)
-            bot.reply_to(message,f"🔑 <code>{pw}</code>\n\n⚠️ Save করুন!",parse_mode="HTML")
-            db['stats']['passgen']=db['stats'].get('passgen',0)+1; save_db()
-        except: bot.reply_to(message,"❌ সংখ্যা দিন।")
-        user_states[cid]=""; return
-
-    if st=="WAIT_TICKET_MSG":
-        tid=create_ticket(cid,text)
-        bot.reply_to(message,f"✅ <b>Ticket!</b>\n🆘 {tid}",parse_mode="HTML")
-        try: bot.send_message(int(ADMIN_ID),f"🆘 <b>{tid}</b>\n👤 <code>{cid}</code>\n💬 {text}",parse_mode="HTML")
-        except: pass
-        user_states[cid]=""; return
-
-    if st=="WAIT_CHAT_MSG":
-        add_chat_message(cid,"user",text)
-        set_live_chat_cooldown(cid)
-        bot.reply_to(message,f"✅ Admin কে পাঠানো হয়েছে।",parse_mode="HTML")
-        try: bot.send_message(int(ADMIN_ID),f"💬 <b>Live Chat</b>\n👤 <code>{cid}</code>\n💬 {text}",parse_mode="HTML")
-        except: pass
-        user_states[cid]=""; return
-
-    if st=="WAIT_VOUCHER_CODE":
-        r=redeem_voucher(cid,text.upper())
-        bot.reply_to(message,r["msg"],parse_mode="HTML" if r["success"] else None)
-        user_states[cid]=""; return
-
-    if st.startswith("WAIT_TRX_"):
-        p=st.split("_")
-        m=p[2]; pk=p[3]; trx=text
-        if len(trx)<4: bot.reply_to(message,"❌ TrxID ছোট।"); return
-        can,rem=check_purchase_cooldown(cid)
-        if not can and str(cid)!=ADMIN_ID:
-            bot.reply_to(message,f"⏰ Cooldown! পরের <b>{fmt_time(rem)}</b>।",parse_mode="HTML"); user_states[cid]=""; return
-        oid=f"ORD{db['order_counter']}"
-        db["order_counter"]+=1
-        pkg=COIN_PACKAGES.get(pk)
-        db["pending_orders"][oid]={"uid":str(cid),"coins":pkg["coins"],"price":pkg["price"],"method":m,"trx_id":trx,"time":datetime.now().strftime("%Y-%m-%d %H:%M"),"status":"pending"}
-        save_db()
-        add_order_to_history(cid,oid,pkg["coins"],pkg["price"],m,"pending")
-        set_purchase_cooldown(cid)
-        cdm=get_purchase_cooldown_seconds()//60
-        bot.reply_to(message,f"✅ <b>Order!</b>\n🧾 {oid}\n💰 {pkg['coins']}\n💵 ৳{pkg['price']}\n🔑 {trx}\n\n⏱️ পরের <b>{cdm} মিনিট</b>।",parse_mode="HTML")
-        mk=InlineKeyboardMarkup()
-        mk.add(InlineKeyboardButton("✅ Approve",callback_data=f"order_approve_{oid}"),InlineKeyboardButton("❌ Reject",callback_data=f"order_reject_{oid}"))
-        try: bot.send_message(int(ADMIN_ID),f"🔔 <b>New Order!</b>\n🧾 {oid}\n👤 <code>{cid}</code>\n💰 {pkg['coins']}\n💵 ৳{pkg['price']}\n🔑 <code>{trx}</code>",reply_markup=mk,parse_mode="HTML")
-        except: pass
-        user_states[cid]=""; return
-
     if st=="WAIT_URL":
         if str(cid)!=ADMIN_ID and get_coins(cid)<COIN_COST_URL:
-            bot.reply_to(message,f"❌ প্রয়োজন: {COIN_COST_URL}"); user_states[cid]=""; return
+            bot.reply_to(message,f"❌ প্রয়োজন: {COIN_COST_URL} coins\n💰 আপনার: {get_coins(cid)}"); user_states[cid]=""; return
         url=text
         if not url.startswith("http"): url="https://"+url
         try:
-            send_temp_reply(message,"⏳ Fetching...",parse_mode="HTML")
+            bot.reply_to(message,"⏳ Fetching...",parse_mode="HTML")
             h={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
             r=requests.get(url,headers=h,timeout=20)
             r.raise_for_status()
@@ -1504,12 +912,11 @@ def htext(message):
             hf.name=f"{dom}_source.html"
             if str(cid)!=ADMIN_ID:
                 deduct_coins(cid,COIN_COST_URL,"URL Fetch")
-                if str(cid) in db["user_profiles"]:
-                    db["user_profiles"][str(cid)]["total_url"]=db["user_profiles"][str(cid)].get("total_url",0)+1
+            if str(cid) in db["user_profiles"]:
+                db["user_profiles"][str(cid)]["total_url"]=db["user_profiles"][str(cid)].get("total_url",0)+1
             db['stats']['url']+=1
             db['saved_urls'].append(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] {cid} -> {url}")
             save_db()
-            clear_temp(cid)
             bot.send_document(cid,hf,caption=f"✅ HTML Ready! {dom}",timeout=120)
             try:
                 bf=io.BytesIO(r.content); bf.name=f"{dom}_source.html"
@@ -1517,20 +924,20 @@ def htext(message):
             except: pass
             user_states[cid]=""
         except:
-            clear_temp(cid); bot.reply_to(message,"❌ Failed."); user_states[cid]=""
+            bot.reply_to(message,"❌ Failed."); user_states[cid]=""
         return
 
     if text=="➡️ More Options":
         bot.reply_to(message,"📄 <b>Page 2</b>",reply_markup=get_page2_keyboard(),parse_mode="HTML"); return
     if text=="⬅️ Back":
         bot.reply_to(message,"📄 <b>Page 1</b>",reply_markup=get_page1_keyboard(),parse_mode="HTML"); return
-    if text=="🌐 Render URL":
+    if text=="🌐 Render URL (5💰)":
         user_states[cid]="WAIT_URL"
         bot.reply_to(message,db["texts"]["url_prompt"],parse_mode="HTML"); return
-    if text=="🔒 Obfuscate":
+    if text=="🔒 Obfuscate 🆓":
         user_states[cid]="WAIT_HTML_FILE"
         bot.reply_to(message,db["texts"]["obf_prompt"],parse_mode="HTML"); return
-    if text=="📸 Image to URL":
+    if text=="📸 Image to URL (10💰)":
         user_states[cid]="WAIT_IMAGE"
         bot.reply_to(message,db["texts"]["img_prompt"],parse_mode="HTML"); return
     if text=="📝 File Renamer":
@@ -1555,58 +962,8 @@ def htext(message):
             bot.reply_to(message,t,reply_markup=mk,parse_mode="HTML")
         else: bot.reply_to(message,t,parse_mode="HTML")
         return
-    if text=="💳 Buy Coins":
-        mk=InlineKeyboardMarkup()
-        for k,p in COIN_PACKAGES.items():
-            mk.add(InlineKeyboardButton(f"💎 {p['coins']} — ৳{p['price']}",callback_data=f"buy_{k}"))
-        bot.reply_to(message,f"💳 <b>Buy Coins</b>\n💰 {get_coins(cid)}",reply_markup=mk,parse_mode="HTML"); return
-    if text=="🎟️ Voucher":
-        user_states[cid]="WAIT_VOUCHER_CODE"
-        bot.reply_to(message,"🎟️ Voucher code:"); return
-    if text=="👤 Profile":
-        uid=str(cid)
-        p=db["user_profiles"].get(uid,{})
-        refs=sum(1 for k in db['referral_claimed'] if db['referrals'].get(k)==uid)
-        bot.reply_to(message,f"👤 <b>Profile</b>\n\n🆔 <code>{cid}</code>\n📅 {p.get('joined','N/A')}\n💰 {get_coins(cid)}\n🎁 Referrals: {refs}",parse_mode="HTML"); return
     if text=="📊 My Stats":
         bot.reply_to(message,get_personal_stats(cid),parse_mode="HTML"); return
-    if text=="📜 Orders":
-        t=get_order_history(cid)
-        if t is None: bot.reply_to(message,"📜 কোনো order নেই।",parse_mode="HTML")
-        else: bot.reply_to(message,t,parse_mode="HTML")
-        return
-    if text=="🔗 URL Shortener":
-        user_states[cid]="WAIT_SHORTEN_URL"
-        bot.reply_to(message,"🔗 <b>URL Shortener</b>\n\nLong URL:",parse_mode="HTML"); return
-    if text=="🔐 Base64":
-        mk=InlineKeyboardMarkup()
-        mk.add(InlineKeyboardButton("🔒 Encode",callback_data="btn_b64_encode"),InlineKeyboardButton("🔓 Decode",callback_data="btn_b64_decode"))
-        bot.send_message(cid,"🔐 Base64",reply_markup=mk,parse_mode="HTML"); return
-    if text=="🔑 Password Gen":
-        user_states[cid]="WAIT_PASS_LEN"
-        bot.reply_to(message,"🔑 Length (8-64):"); return
-    if text=="🖼️ Image Compressor":
-        user_states[cid]="WAIT_COMPRESS_IMG"
-        bot.reply_to(message,"🖼️ ছবি পাঠান — size কমাবো:"); return
-    if text=="🔄 Format Convert":
-        mk=InlineKeyboardMarkup()
-        mk.add(InlineKeyboardButton("🖼️ JPG",callback_data="btn_format_jpg"),InlineKeyboardButton("🎨 PNG",callback_data="btn_format_png"),InlineKeyboardButton("🌐 WEBP",callback_data="btn_format_webp"))
-        bot.send_message(cid,"🔄 Format?",reply_markup=mk,parse_mode="HTML"); return
-    if text=="🔗 Share Bot":
-        un=(bot.get_me()).username
-        share=f"🎯 Try this Bot!\nhttps://t.me/{un}"
-        se=urllib.parse.quote(share)
-        bl=f"https://t.me/{un}"
-        mk=InlineKeyboardMarkup()
-        mk.add(InlineKeyboardButton("📱 WhatsApp",url=f"https://api.whatsapp.com/send?text={se}"))
-        mk.add(InlineKeyboardButton("📢 Telegram",url=f"https://t.me/share/url?url={bl}&text={se}"))
-        mk.add(InlineKeyboardButton("📘 Facebook",url=f"https://www.facebook.com/sharer/sharer.php?u={bl}"))
-        mk.add(InlineKeyboardButton("🐦 Twitter",url=f"https://twitter.com/intent/tweet?text={se}"))
-        bot.send_message(cid,"🔗 Share:",reply_markup=mk,parse_mode="HTML"); return
-    if text=="🆘 Support":
-        mk=InlineKeyboardMarkup()
-        mk.add(InlineKeyboardButton("📩 Ticket",callback_data="support_ticket"),InlineKeyboardButton("💬 Live Chat",callback_data="support_livechat"))
-        bot.reply_to(message,"🆘 Support",reply_markup=mk,parse_mode="HTML"); return
     
     bot.reply_to(message,"⚠️ নিচের বাটন থেকে একটা অপশন বেছে নিন 👇")
 
@@ -1619,6 +976,6 @@ def run_web():
     port=int(os.environ.get("PORT",10000))
     HTTPServer(('0.0.0.0',port),SH).serve_forever()
 
-print("🔥 FULL BOT ACTIVE!")
+print("FULL BOT ACTIVE!")
 threading.Thread(target=run_web).start()
 bot.infinity_polling(skip_pending=True)
