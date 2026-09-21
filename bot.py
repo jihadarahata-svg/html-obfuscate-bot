@@ -3,20 +3,8 @@ from telebot.types import InlineKeyboardMarkup,InlineKeyboardButton,ReplyKeyboar
 from datetime import datetime,timedelta
 from http.server import HTTPServer,BaseHTTPRequestHandler
 from pymongo import MongoClient
-from PIL import Image
 
-TOKEN='8485929330:AAG8t3n4yE1OMuhdJsbgFxi5z1WsoNDbuuk'
-ADMIN_ID="8270019686"
-IMGBB_API_KEY="YOUR_IMGBB_API_KEY_HERE"
-MONGO_URI="mongodb+srv://jihadarahata_db_user:jihadarahata_db_user@cluster0.yqzqslh.mongodb.net/?appName=Cluster0"
-MONGO_DB_NAME="telegram_bot"
-import base64,telebot,io,random,string,requests,json,os,urllib.parse,re,time,threading
-from telebot.types import InlineKeyboardMarkup,InlineKeyboardButton,ReplyKeyboardMarkup,KeyboardButton
-from datetime import datetime,timedelta
-from http.server import HTTPServer,BaseHTTPRequestHandler
-from pymongo import MongoClient
-
-TOKEN=os.getenv('TOKEN')
+TOKEN=os.getenv('8485929330:AAG8t3n4yE1OMuhdJsbgFxi5z1WsoNDbuuk')
 ADMIN_ID=os.getenv('ADMIN_ID','8691419913')
 MONGO_URI=os.getenv('MONGO_URI')
 MONGO_DB_NAME=os.getenv('MONGO_DB_NAME','telegram_bot')
