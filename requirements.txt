@@ -2,4 +2,3 @@ pyTelegramBotAPI
 requests
 pymongo[srv]
 dnspython
-Pillow
